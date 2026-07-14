@@ -1,5 +1,7 @@
 # Free and Open Source SaaS Boilerplate with Tailwind CSS and Shadcn UI
 
+> This is a fork of [ixartz/SaaS-Boilerplate](https://github.com/ixartz/SaaS-Boilerplate), extended with a provider-agnostic payments layer supporting Stripe and Razorpay side by side. Licensed MIT, same as upstream.
+
 <p align="center">
   <a href="https://react-saas.com"><img height="300" src="public/assets/images/nextjs-starter-banner.png?raw=true" alt="Next.js SaaS Template"></a>
 </p>
