@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/spandansingh/razorpay-saas-starter"><img src="https://img.shields.io/badge/repo-spandansingh%2Frazorpay--saas--starter-blue?logo=github" alt="Repo"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/github/license/spandansingh/razorpay-saas-starter" alt="License"></a>
+  <a href="https://github.com/spandansingh/razorpay-saas-starter/stargazers"><img src="https://img.shields.io/github/stars/spandansingh/razorpay-saas-starter?style=flat" alt="Stars"></a>
 </p>
 
 <p align="center">
