@@ -1,7 +1,7 @@
+import type { CheckoutResult, NormalizedEvent, PaymentProvider } from './types';
 import Stripe from 'stripe';
 import { Env } from '@/libs/Env';
 import { getPlanRef } from './planRefs';
-import type { CheckoutResult, NormalizedEvent, PaymentProvider } from './types';
 
 function client(): Stripe {
   if (!Env.STRIPE_SECRET_KEY) {
@@ -58,6 +58,7 @@ export const stripeProvider: PaymentProvider = {
           planId: s.metadata?.planId,
           mode: s.mode === 'subscription' ? 'subscription' : 'payment',
           status: s.mode === 'subscription' ? 'active' : 'paid',
+          customerEmail: s.customer_email ?? s.customer_details?.email ?? undefined,
         };
       }
       case 'customer.subscription.deleted': {

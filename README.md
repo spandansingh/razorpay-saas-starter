@@ -461,6 +461,18 @@ To use Checkly, you must first create an account on [their website](https://www.
 
 To complete the setup, update the `checkly.config.ts` file with your own email address and production URL.
 
+### Integrations
+
+The boilerplate ships a few optional integrations that boot dormant and activate only when you set their environment variables — no code changes required. Every adapter degrades to a safe no-op (an unsent email, an uncaptured event, an allowed-through request) when its key is absent, so a missing vendor never breaks a request.
+
+| Integration | Env vars | Where it's used |
+| --- | --- | --- |
+| **Transactional email** ([Resend](https://resend.com)) | `RESEND_API_KEY`, `EMAIL_FROM` | Welcome email on signup (`/api/webhooks/clerk`) and payment receipts (Stripe/Razorpay webhooks). No-ops to `{ skipped: true }` without a key. |
+| **Product analytics** ([PostHog](https://posthog.com)) | `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` | Client provider in the locale layout + server `capture()` for `checkout_started` / `subscription_active`. Disabled entirely when the key is absent. |
+| **Rate limiting** ([Upstash](https://upstash.com)) | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Defense-in-depth on the checkout API (per user) and payment webhooks (per IP). Allows every request through when unconfigured — signature verification stays the primary guard. |
+
+Set any of these in `.env.local` (git-ignored). See [`docs/INTEGRATIONS_PLAN.md`](./docs/INTEGRATIONS_PLAN.md) for the design and the plug-and-play contract.
+
 ### Useful commands
 
 #### Bundle Analyzer
