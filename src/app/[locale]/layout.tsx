@@ -3,6 +3,8 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { DemoBadge } from '@/components/DemoBadge';
+import { PostHogProvider } from '@/components/PostHogProvider';
+import { Env } from '@/libs/Env';
 import { routing } from '@/libs/I18nRouting';
 import '@/styles/global.css';
 
@@ -52,11 +54,21 @@ export default async function RootLayout(props: {
 
   setRequestLocale(locale);
 
+  // PostHog client provider renders only when the public key is configured;
+  // otherwise analytics stays completely off (no script, no network).
+  const enableAnalytics = Boolean(Env.NEXT_PUBLIC_POSTHOG_KEY);
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider>
-          {props.children}
+          {enableAnalytics
+            ? (
+                <PostHogProvider>{props.children}</PostHogProvider>
+              )
+            : (
+                props.children
+              )}
 
           <DemoBadge />
         </NextIntlClientProvider>

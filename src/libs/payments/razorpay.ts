@@ -1,8 +1,8 @@
+import type { CheckoutResult, NormalizedEvent, PaymentProvider } from './types';
 import Razorpay from 'razorpay';
 import { Env } from '@/libs/Env';
 import { getPlanRef } from './planRefs';
 import { verifyWebhookSignature } from './signature';
-import type { CheckoutResult, NormalizedEvent, PaymentProvider } from './types';
 
 // The razorpay SDK ships loose types; cast to what we actually call.
 type RazorpayClient = {
@@ -92,6 +92,9 @@ export const razorpayProvider: PaymentProvider = {
           planId: sub.notes?.planId,
           mode: 'subscription',
           status: 'active',
+          // The subscription entity itself has no email; pull it from the
+          // payment entity when this event includes one (e.g. subscription.charged).
+          customerEmail: event.payload.payment?.entity?.email,
         };
       }
       case 'subscription.cancelled': {
@@ -115,6 +118,7 @@ export const razorpayProvider: PaymentProvider = {
           planId: pay.notes?.planId,
           mode: 'payment',
           status: 'paid',
+          customerEmail: pay.email,
         };
       }
       default:
