@@ -24,6 +24,16 @@ export const Env = createEnv({
     // Defense-in-depth only; webhook signature verification stays the primary guard.
     UPSTASH_REDIS_REST_URL: z.string().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+    // Object storage (S3-compatible: AWS S3, Cloudflare R2, …) — optional, the app
+    // boots without it. Unlike analytics, storage does NOT silently no-op: an
+    // upload that quietly did nothing would look like success. See libs/storage.ts.
+    STORAGE_ENDPOINT: z.string().optional(),
+    STORAGE_REGION: z.string().optional(),
+    STORAGE_BUCKET: z.string().optional(),
+    STORAGE_ACCESS_KEY_ID: z.string().optional(),
+    STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
+    // Base URL objects are served from (an R2 public bucket URL or a CDN domain).
+    STORAGE_PUBLIC_URL: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().optional(),
@@ -57,6 +67,12 @@ export const Env = createEnv({
     EMAIL_FROM: process.env.EMAIL_FROM,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    STORAGE_ENDPOINT: process.env.STORAGE_ENDPOINT,
+    STORAGE_REGION: process.env.STORAGE_REGION,
+    STORAGE_BUCKET: process.env.STORAGE_BUCKET,
+    STORAGE_ACCESS_KEY_ID: process.env.STORAGE_ACCESS_KEY_ID,
+    STORAGE_SECRET_ACCESS_KEY: process.env.STORAGE_SECRET_ACCESS_KEY,
+    STORAGE_PUBLIC_URL: process.env.STORAGE_PUBLIC_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,

@@ -118,6 +118,27 @@ the API routes stay `.ts`. `sendEmail` still no-ops without `RESEND_API_KEY`.
 Email clients support neither CSS variables nor `oklch()`, so `EmailLayout.tsx`
 mirrors the design tokens as hex — keep them in step with `src/styles/global.css`.
 
+## Object storage
+
+`src/libs/storage.ts` is an S3-compatible adapter (AWS S3, Cloudflare R2 — the
+endpoint is configurable; R2 is the lazy default: same API, no egress fees) with
+`POST /api/uploads/sign` handing the browser a short-lived presigned PUT so files
+never pass through this server.
+
+It breaks the plug-and-play no-op convention on purpose: email and analytics
+silently skip when unconfigured, but an upload that quietly did nothing would look
+like success and lose the user's file. The app still boots with no storage env —
+nothing runs at import — and callers check `isStorageConfigured()` to return a
+clear error; the unconfigured path throws.
+
+Because the presigned URL bypasses the server, the sign route is the only gate:
+it validates content-type and size before signing, and builds the key from the
+session's `orgId` with a sanitised filename (`orgObjectKey`).
+
+**Scaffold only** — there is no UI consumer yet. Per spec 09, build one when a
+real upload feature is requested; Clerk already handles user avatars, so the
+adapter is for org logos and attachments.
+
 ## Known limitations (starter-grade, upgrade when needed)
 
 - No proration or mid-cycle plan changes beyond what the Stripe portal gives free.
