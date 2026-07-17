@@ -1,8 +1,8 @@
+import type { NormalizedEvent, PaymentProvider, ProviderName } from './types';
 import { db } from '@/libs/DB';
 import { subscriptionSchema } from '@/models/Schema';
 import { razorpayProvider } from './razorpay';
 import { stripeProvider } from './stripe';
-import type { NormalizedEvent, PaymentProvider, ProviderName } from './types';
 
 const providers: Record<ProviderName, PaymentProvider> = {
   stripe: stripeProvider,
@@ -32,10 +32,18 @@ export async function fulfill(event: NormalizedEvent): Promise<void> {
       planId: event.planId,
       mode: event.mode,
       status: event.status,
+      customerId: event.customerId ?? null,
     })
     .onConflictDoUpdate({
       target: subscriptionSchema.externalId,
-      set: { status: event.status, planId: event.planId, updatedAt: new Date() },
+      set: {
+        status: event.status,
+        planId: event.planId,
+        updatedAt: new Date(),
+        // Only overwrite when this event carries one — a cancellation has no
+        // customer id, and must not blank out the one we already stored.
+        ...(event.customerId ? { customerId: event.customerId } : {}),
+      },
     });
 }
 

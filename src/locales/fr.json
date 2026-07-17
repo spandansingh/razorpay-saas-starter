@@ -101,7 +101,8 @@
     "meta_description": "Un template gratuit et open-source de landing page pour votre entreprise SaaS, construit avec Next.js, TypeScript, Shadcn UI et Tailwind CSS.",
     "home": "Accueil",
     "members": "Membres",
-    "settings": "Réglages"
+    "settings": "Réglages",
+    "billing": "Facturation"
   },
   "DashboardIndexPage": {
     "title_bar": "Tableau de bord",
@@ -118,5 +119,37 @@
   "OrganizationProfilePage": {
     "title_bar": "Gestion de l’organisation",
     "title_bar_description": "Gérer votre organisation"
+  },
+  "NotAuthorized": {
+    "title": "Accès administrateur requis",
+    "description": "Seuls les administrateurs de l’organisation peuvent gérer ceci. Demandez à un administrateur de votre organisation si vous avez besoin d’un accès."
+  },
+  "PlanCheckout": {
+    "pay_with": "Payer avec {provider}",
+    "provider_stripe": "Stripe",
+    "provider_razorpay": "Razorpay",
+    "no_gateway_configured": "Aucune passerelle de paiement n’est encore configurée pour ce forfait."
+  },
+  "BillingPage": {
+    "title_bar": "Facturation",
+    "title_bar_description": "Gérez le forfait et les paiements de votre organisation",
+    "current_plan_title": "Forfait actuel",
+    "label_plan": "Forfait",
+    "label_status": "Statut",
+    "label_provider": "Payé avec",
+    "label_mode": "Facturation",
+    "status_active": "Actif",
+    "status_paid": "Payé",
+    "status_cancelled": "Annulé",
+    "status_failed": "Échoué",
+    "mode_subscription": "Récurrent",
+    "mode_payment": "Paiement unique",
+    "manage_billing": "Gérer la facturation",
+    "cancel_subscription": "Annuler l’abonnement",
+    "cancel_confirm": "Annuler cet abonnement à la fin du cycle de facturation en cours ?",
+    "one_time_note": "Il s’agissait d’un paiement unique, il n’y a donc rien à annuler.",
+    "no_plan_title": "Aucun forfait actif",
+    "no_plan_description": "Choisissez un forfait pour commencer.",
+    "plan_price": "{price} $ / mois"
   }
 }

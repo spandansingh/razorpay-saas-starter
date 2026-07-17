@@ -40,11 +40,31 @@ export type NormalizedEvent = {
   // Customer email from the gateway payload, when present. Optional because not
   // every event (cancellations, deletions) carries one. Used for receipts only.
   customerEmail?: string;
+  // The gateway's customer id, when the payload carries one. Persisted so the
+  // billing page can open the Stripe portal later.
+  customerId?: string;
 };
+
+// What a subscription row needs to expose for manage() to act on it. Not
+// exported: callers pass an object literal, implementations infer it.
+type ManageTarget = {
+  externalId: string;
+  customerId: string | null;
+  mode: PaymentMode;
+};
+
+// Stripe hands back a hosted portal URL; Razorpay has no portal, so we cancel
+// server-side and tell the caller it's done.
+export type ManageResult
+  = | { kind: 'redirect'; url: string }
+    | { kind: 'cancelled' };
 
 export type PaymentProvider = {
   name: ProviderName;
   createCheckout: (params: CheckoutParams) => Promise<CheckoutResult>;
   // Returns null when the signature is invalid or the event is one we ignore.
   parseWebhook: (rawBody: string, headers: Headers) => Promise<NormalizedEvent | null>;
+  // Optional: one-time payments have nothing to manage, and a gateway may not
+  // offer a portal. Callers must handle its absence.
+  manage?: (target: ManageTarget, returnUrl: string) => Promise<ManageResult>;
 };

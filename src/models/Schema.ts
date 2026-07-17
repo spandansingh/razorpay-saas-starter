@@ -1,3 +1,4 @@
+import type { NormalizedEvent, PaymentMode, ProviderName } from '@/libs/payments/types';
 import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
@@ -31,11 +32,16 @@ export const todoSchema = pgTable('todo', {
 export const subscriptionSchema = pgTable('subscription', {
   id: serial('id').primaryKey(),
   orgId: text('org_id').notNull(),
-  provider: text('provider').notNull(), // 'stripe' | 'razorpay'
+  // Stored as text; typed here so readers get the union instead of a bare string.
+  provider: text('provider').$type<ProviderName>().notNull(),
   externalId: text('external_id').notNull().unique(),
   planId: text('plan_id').notNull(),
-  mode: text('mode').notNull(), // 'payment' (one-time) | 'subscription' (recurring)
-  status: text('status').notNull(), // 'active' | 'paid' | 'cancelled' | 'failed'
+  mode: text('mode').$type<PaymentMode>().notNull(), // one-time | recurring
+  status: text('status').$type<NormalizedEvent['status']>().notNull(),
+  // The gateway's own customer id. Nullable: not every event carries one, and
+  // Razorpay one-time orders have no customer. Needed to open the Stripe portal,
+  // which keys on the customer rather than the checkout session.
+  customerId: text('customer_id'),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()
     .$onUpdate(() => new Date())

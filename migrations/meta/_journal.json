@@ -15,6 +15,13 @@
       "when": 1784029691977,
       "tag": "0001_plain_wrecking_crew",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784271452772,
+      "tag": "0002_strong_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

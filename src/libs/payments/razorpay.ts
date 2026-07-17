@@ -1,4 +1,4 @@
-import type { CheckoutResult, NormalizedEvent, PaymentProvider } from './types';
+import type { CheckoutResult, ManageResult, NormalizedEvent, PaymentProvider } from './types';
 import Razorpay from 'razorpay';
 import { Env } from '@/libs/Env';
 import { getPlanRef } from './planRefs';
@@ -7,7 +7,10 @@ import { verifyWebhookSignature } from './signature';
 // The razorpay SDK ships loose types; cast to what we actually call.
 type RazorpayClient = {
   orders: { create: (opts: Record<string, unknown>) => Promise<{ id: string }> };
-  subscriptions: { create: (opts: Record<string, unknown>) => Promise<{ id: string }> };
+  subscriptions: {
+    create: (opts: Record<string, unknown>) => Promise<{ id: string }>;
+    cancel: (id: string, cancelAtCycleEnd?: boolean) => Promise<{ id: string; status: string }>;
+  };
 };
 
 function client(): RazorpayClient {
@@ -29,7 +32,9 @@ export const razorpayProvider: PaymentProvider = {
       throw new Error(`Unknown or free plan "${params.planId}"`);
     }
     const notes = { orgId: params.orgId, planId: params.planId };
-    const keyId = Env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? Env.RAZORPAY_KEY_ID!;
+    // `||`, not `??`: the shipped .env defines NEXT_PUBLIC_RAZORPAY_KEY_ID as an
+    // empty string, which is not nullish and would hand the modal a blank key.
+    const keyId = Env.NEXT_PUBLIC_RAZORPAY_KEY_ID || Env.RAZORPAY_KEY_ID!;
 
     if (params.mode === 'subscription') {
       if (!ref.razorpayPlanId) {
@@ -95,6 +100,7 @@ export const razorpayProvider: PaymentProvider = {
           // The subscription entity itself has no email; pull it from the
           // payment entity when this event includes one (e.g. subscription.charged).
           customerEmail: event.payload.payment?.entity?.email,
+          customerId: sub.customer_id,
         };
       }
       case 'subscription.cancelled': {
@@ -106,6 +112,7 @@ export const razorpayProvider: PaymentProvider = {
           planId: sub.notes?.planId,
           mode: 'subscription',
           status: 'cancelled',
+          customerId: sub.customer_id,
         };
       }
       case 'order.paid':
@@ -119,10 +126,21 @@ export const razorpayProvider: PaymentProvider = {
           mode: 'payment',
           status: 'paid',
           customerEmail: pay.email,
+          customerId: pay.customer_id,
         };
       }
       default:
         return null;
     }
+  },
+
+  // No hosted portal exists, so manage() means cancel. At cycle end, so the
+  // customer keeps what they paid for; the webhook writes the final status.
+  async manage(target): Promise<ManageResult> {
+    if (target.mode !== 'subscription') {
+      throw new Error('Razorpay one-time payments cannot be cancelled');
+    }
+    await client().subscriptions.cancel(target.externalId, true);
+    return { kind: 'cancelled' };
   },
 };

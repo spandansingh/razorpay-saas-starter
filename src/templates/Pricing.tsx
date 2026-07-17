@@ -30,7 +30,11 @@ export const Pricing = () => {
                   size: 'sm',
                   className: 'w-full',
                 })}
-                href="/sign-up"
+                // The marketing pages sit outside ClerkProvider and clerkMiddleware,
+                // so auth state is unknowable here — everyone routes through sign-up,
+                // which lands them on the billing page where checkout actually lives.
+                // `redirect_url` is the param Clerk itself honours.
+                href="/sign-up?redirect_url=/dashboard/billing"
               >
                 {t('button_text')}
               </Link>

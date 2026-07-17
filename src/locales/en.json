@@ -101,7 +101,8 @@
     "meta_description": "A free and open-source landing page template for your SaaS business, built with Next.js, TypeScript, Shadcn UI, and Tailwind CSS.",
     "home": "Home",
     "members": "Members",
-    "settings": "Settings"
+    "settings": "Settings",
+    "billing": "Billing"
   },
   "DashboardIndexPage": {
     "title_bar": "Dashboard",
@@ -118,5 +119,37 @@
   "OrganizationProfilePage": {
     "title_bar": "Organization Management",
     "title_bar_description": "Manage your organization"
+  },
+  "NotAuthorized": {
+    "title": "You need admin access",
+    "description": "Only organization admins can manage this. Ask an admin in your organization if you need access."
+  },
+  "PlanCheckout": {
+    "pay_with": "Pay with {provider}",
+    "provider_stripe": "Stripe",
+    "provider_razorpay": "Razorpay",
+    "no_gateway_configured": "No payment gateway is configured for this plan yet."
+  },
+  "BillingPage": {
+    "title_bar": "Billing",
+    "title_bar_description": "Manage your organization’s plan and payments",
+    "current_plan_title": "Current plan",
+    "label_plan": "Plan",
+    "label_status": "Status",
+    "label_provider": "Paid with",
+    "label_mode": "Billing",
+    "status_active": "Active",
+    "status_paid": "Paid",
+    "status_cancelled": "Cancelled",
+    "status_failed": "Failed",
+    "mode_subscription": "Recurring",
+    "mode_payment": "One-time",
+    "manage_billing": "Manage billing",
+    "cancel_subscription": "Cancel subscription",
+    "cancel_confirm": "Cancel this subscription at the end of the current billing cycle?",
+    "one_time_note": "This was a one-time payment, so there is nothing to cancel.",
+    "no_plan_title": "No active plan",
+    "no_plan_description": "Choose a plan to get started.",
+    "plan_price": "${price} / month"
   }
 }
