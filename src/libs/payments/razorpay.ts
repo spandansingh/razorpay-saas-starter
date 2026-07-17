@@ -5,10 +5,15 @@ import { getPlanRef } from './planRefs';
 import { verifyWebhookSignature } from './signature';
 
 // The razorpay SDK ships loose types; cast to what we actually call.
+type RazorpayNotes = { orgId?: string; planId?: string };
 type RazorpayClient = {
-  orders: { create: (opts: Record<string, unknown>) => Promise<{ id: string }> };
+  orders: {
+    create: (opts: Record<string, unknown>) => Promise<{ id: string }>;
+    fetch: (id: string) => Promise<{ id: string; notes?: RazorpayNotes }>;
+  };
   subscriptions: {
     create: (opts: Record<string, unknown>) => Promise<{ id: string }>;
+    fetch: (id: string) => Promise<{ id: string; notes?: RazorpayNotes }>;
     cancel: (id: string, cancelAtCycleEnd?: boolean) => Promise<{ id: string; status: string }>;
   };
 };
@@ -21,6 +26,20 @@ function client(): RazorpayClient {
     key_id: Env.RAZORPAY_KEY_ID,
     key_secret: Env.RAZORPAY_KEY_SECRET,
   }) as unknown as RazorpayClient;
+}
+
+// The orgId/planId a checkout was created for, read back from the notes we set
+// on the order/subscription at creation. The client success handler must not be
+// trusted for these — its signature only proves the payment happened, not which
+// plan or org it was for.
+export async function fetchCheckoutNotes(
+  mode: 'payment' | 'subscription',
+  entityId: string,
+): Promise<RazorpayNotes> {
+  const entity = mode === 'subscription'
+    ? await client().subscriptions.fetch(entityId)
+    : await client().orders.fetch(entityId);
+  return entity.notes ?? {};
 }
 
 export const razorpayProvider: PaymentProvider = {

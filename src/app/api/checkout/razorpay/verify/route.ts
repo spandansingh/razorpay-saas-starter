@@ -3,19 +3,21 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Env } from '@/libs/Env';
 import { fulfill } from '@/libs/payments';
+import { fetchCheckoutNotes } from '@/libs/payments/razorpay';
 import { verifyPaymentSignature } from '@/libs/payments/signature';
 
 // Called by the client right after the Razorpay modal succeeds. Confirms the
 // signature so the UI can react immediately; the webhook is still the source of
 // truth (fulfill() is idempotent, so a double-write is harmless).
+// orgId/planId are deliberately NOT read from the body: the signature only
+// proves the payment happened, so a valid one could otherwise be replayed with
+// any plan or org. We read them back from the gateway's own record instead.
 const bodySchema = z.object({
   razorpay_payment_id: z.string(),
   razorpay_order_id: z.string().optional(),
   razorpay_subscription_id: z.string().optional(),
   razorpay_signature: z.string(),
   mode: z.enum(['payment', 'subscription']),
-  planId: z.string(),
-  orgId: z.string(),
 });
 
 export async function POST(req: Request) {
@@ -49,6 +51,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_signature' }, { status: 400 });
   }
 
+  // Source of truth for what was bought: the notes Razorpay stored when we
+  // created the order/subscription, not the client-supplied body.
+  const notes = await fetchCheckoutNotes(b.mode, entityId);
+  if (!notes.orgId || !notes.planId) {
+    return NextResponse.json({ error: 'unattributable_payment' }, { status: 400 });
+  }
+
   // Fulfil only — the audit trail is written from the webhook, which carries the
   // gateway's real event id. Recording here would log the same payment twice
   // under an id Razorpay never issued.
@@ -57,8 +66,8 @@ export async function POST(req: Request) {
     externalId: entityId,
     eventId: `verify:${b.razorpay_payment_id}`,
     type: 'checkout.verified',
-    orgId: b.orgId,
-    planId: b.planId,
+    orgId: notes.orgId,
+    planId: notes.planId,
     mode: b.mode,
     status: b.mode === 'subscription' ? 'active' : 'paid',
   });
