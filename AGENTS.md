@@ -97,6 +97,17 @@ inside `authz.ts` — no other file reads roles.
 `vi.mock('@/libs/DB', () => import('<rel>/tests/helpers/testDb'))` to test DB code
 against real SQL with no server. `npm run test` needs no live database.
 
+`tests/helpers/webhooks.ts` builds **synthetic signed webhooks** for both gateways.
+Both signatures are plain HMAC over the raw body, so they are computable offline —
+the money path is tested deterministically with no live gateway and no real keys.
+Test `Env` is mocked per file; those secrets are fixtures, not credentials. Never
+point the suite at a live sandbox: it is slower, flakier, and proves nothing extra
+about our own parsing.
+
+Not covered: authed end-to-end flows (sign-in → checkout → billing) need a real
+Clerk test instance (`@clerk/testing` + `CLERK_SECRET_KEY`). The webhook route test
+covers the same server path — signature → parse → fulfil → audit log — without one.
+
 ## Emails
 
 `src/emails/` holds React Email templates. Adding one = a component plus a small
