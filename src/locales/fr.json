@@ -151,5 +151,18 @@
     "no_plan_title": "Aucun forfait actif",
     "no_plan_description": "Choisissez un forfait pour commencer.",
     "plan_price": "{price} $ / mois"
+  },
+  "Todos": {
+    "add": "Ajouter une tâche",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "field_title": "Titre",
+    "field_message": "Message",
+    "empty": "Aucune tâche pour le moment. Ajoutez la première ci-dessus.",
+    "error_invalid_input": "Un titre et un message sont tous les deux obligatoires.",
+    "error_unauthorized": "Vous devez être connecté avec une organisation active.",
+    "error_not_found": "Cette tâche n’existe plus."
   }
 }

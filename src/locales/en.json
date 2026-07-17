@@ -151,5 +151,18 @@
     "no_plan_title": "No active plan",
     "no_plan_description": "Choose a plan to get started.",
     "plan_price": "${price} / month"
+  },
+  "Todos": {
+    "add": "Add todo",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "field_title": "Title",
+    "field_message": "Message",
+    "empty": "No todos yet. Add your first one above.",
+    "error_invalid_input": "A title and a message are both required.",
+    "error_unauthorized": "You need to be signed in with an active organization.",
+    "error_not_found": "That todo no longer exists."
   }
 }

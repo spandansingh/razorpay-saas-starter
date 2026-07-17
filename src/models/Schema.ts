@@ -1,5 +1,5 @@
 import type { NormalizedEvent, PaymentMode, ProviderName } from '@/libs/payments/types';
-import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
 
@@ -14,8 +14,11 @@ import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 // Need a database for production? Check out https://get.neon.com/BMFYNtx
 // Tested and compatible with SaaS Boilerplate
 
+// Org-scoped: every read and write filters on `orgId`, which always comes from
+// the session and never from the client. `ownerId` records who created the row.
 export const todoSchema = pgTable('todo', {
   id: serial('id').primaryKey(),
+  orgId: text('org_id').notNull(),
   ownerId: text('owner_id').notNull(),
   title: text('title').notNull(),
   message: text('message').notNull(),
@@ -24,7 +27,10 @@ export const todoSchema = pgTable('todo', {
     .$onUpdate(() => new Date())
     .notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-});
+}, table => [
+  // Every query filters by org, so the index carries the whole access pattern.
+  index('todo_org_id_idx').on(table.orgId),
+]);
 
 // Single table for both Stripe and Razorpay. `provider` says which gateway,
 // `externalId` is that gateway's subscription/order/payment id (unique so
