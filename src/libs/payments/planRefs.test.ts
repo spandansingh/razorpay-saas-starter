@@ -1,6 +1,27 @@
 import type { PlanRef } from './planRefs';
 import { describe, expect, it } from 'vitest';
-import { providersFor } from './planRefs';
+import { Env } from '@/libs/Env';
+import { getPlanRef, providersFor } from './planRefs';
+
+describe('getPlanRef', () => {
+  it('falls back to the env currency and the default cycle count', () => {
+    const ref = getPlanRef('premium');
+
+    // Neither plan declares its own currency or totalCount, so both fall back —
+    // this is the existing single-currency setup, unchanged.
+    expect(ref).toMatchObject({
+      planId: 'premium',
+      amount: 79,
+      currency: Env.PAYMENTS_CURRENCY,
+      totalCount: 120,
+    });
+  });
+
+  it('returns null for a free or unknown plan', () => {
+    expect(getPlanRef('free')).toBeNull();
+    expect(getPlanRef('nope')).toBeNull();
+  });
+});
 
 describe('providersFor', () => {
   const bothConfigured = { stripeConfigured: true, razorpayConfigured: true };
@@ -8,6 +29,7 @@ describe('providersFor', () => {
     planId: 'premium',
     amount: 79,
     currency: 'USD',
+    totalCount: 120,
     stripePriceId: 'price_123',
     razorpayPlanId: 'plan_123',
   };

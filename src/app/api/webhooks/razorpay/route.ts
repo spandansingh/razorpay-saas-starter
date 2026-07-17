@@ -1,7 +1,9 @@
+import { renderReceiptEmail } from '@/emails/ReceiptEmail';
 import { capture } from '@/libs/analytics';
 import { sendEmail } from '@/libs/email';
 import { logger } from '@/libs/Logger';
 import { fulfill, getProvider } from '@/libs/payments';
+import { recordEvent } from '@/libs/payments/events';
 
 // Razorpay signs the raw body; read it as text before parsing. The signature is
 // the security boundary here: without the secret an attacker cannot forge an
@@ -16,6 +18,9 @@ export async function POST(req: Request) {
   }
 
   await fulfill(event);
+  // Append to the audit trail after fulfillment, so the log only ever claims
+  // events we actually applied. Idempotent on redelivery.
+  await recordEvent(event);
 
   // Side effects fire only on a successful checkout — never on cancellations.
   if (event.status === 'active' || event.status === 'paid') {
@@ -28,8 +33,12 @@ export async function POST(req: Request) {
     if (event.customerEmail) {
       const result = await sendEmail({
         to: event.customerEmail,
-        subject: 'Payment receipt',
-        text: `Thanks for your purchase. Your ${event.planId ?? 'subscription'} is now ${event.status}.`,
+        ...(await renderReceiptEmail({
+          planId: event.planId ?? 'subscription',
+          status: event.status,
+          amount: event.amount,
+          currency: event.currency,
+        })),
       });
       if (!result.skipped && result.error) {
         logger.error(`receipt email failed (${event.externalId}): ${result.error}`);

@@ -47,6 +47,19 @@ Both **one-time** (`mode: 'payment'`) and **recurring** (`mode: 'subscription'`)
 2. Create the price (Stripe) and plan (Razorpay) in each dashboard.
 3. Add their ids to env (`STRIPE_PRICE_*`, `RAZORPAY_PLAN_*`) and wire them in `planRefs.ts`.
 
+Each `planRefs.ts` entry may also declare:
+
+- `currency` — this plan's own currency. Unset falls back to `PAYMENTS_CURRENCY`,
+  so single-currency setups need no config. Stripe price ids already encode their
+  currency; Razorpay needs it passed explicitly.
+- `totalCount` — how many cycles a Razorpay subscription runs for. Razorpay has no
+  "until cancelled", so it needs a finite count up front. Unset defaults to 120
+  (ten years monthly). A yearly plan wants ~10, not 120.
+
+A gateway is only offered for a plan when its keys **and** that plan's id for it are
+present (`providersFor`), so an unconfigured gateway renders no button rather than
+one that fails at the API.
+
 ### Rules for agents
 
 - **Never** log or echo secret keys or webhook payloads containing signatures.
@@ -54,8 +67,52 @@ Both **one-time** (`mode: 'payment'`) and **recurring** (`mode: 'subscription'`)
 - Keep new gateway logic inside a `PaymentProvider` implementation; don't scatter `if (provider === ...)` through the app.
 - Payments is a money path: keep signature verification; don't "simplify" it away.
 
+## Data model
+
+- `subscription` — latest status per checkout, one row per `externalId`, keyed by org.
+- `billing_event` — append-only audit trail, one row per processed webhook, unique
+  on `(provider, eventId)` so redeliveries don't duplicate. Stores only normalized,
+  non-sensitive columns: **never the raw payload or signature**.
+- `todo` — the org-scoped CRUD reference (`src/features/todos/`). The pattern to
+  copy: `orgId` comes from `auth()`, never the client, and every mutation matches
+  on `(id AND orgId)`.
+
+## Auth & roles
+
+`src/libs/authz.ts` wraps Clerk's default org roles:
+
+- `requireOrgAdmin()` — server gate; returns a 401/403 response or the resolved
+  `{ userId, orgId }`. Used by `/api/checkout` and `/api/billing/manage`.
+- `isOrgAdmin()` — boolean for UI. Never the only guard; always pair it with the
+  server check.
+
+To switch to Clerk **custom permissions**, define the permission in the Clerk
+dashboard and swap `{ role: 'org:admin' }` for `{ permission: 'org:billing:manage' }`
+inside `authz.ts` — no other file reads roles.
+
+## Testing
+
+`tests/helpers/testDb.ts` is an in-memory PGlite migrated from the real
+`migrations/` folder. Swap it in with
+`vi.mock('@/libs/DB', () => import('<rel>/tests/helpers/testDb'))` to test DB code
+against real SQL with no server. `npm run test` needs no live database.
+
+## Emails
+
+`src/emails/` holds React Email templates. Adding one = a component plus a small
+`render*()` function returning `{ subject, html, text }`; the route then calls
+`sendEmail({ to, ...rendered })`. Keeping the JSX inside `src/emails/` is what lets
+the API routes stay `.ts`. `sendEmail` still no-ops without `RESEND_API_KEY`.
+
+Email clients support neither CSS variables nor `oklch()`, so `EmailLayout.tsx`
+mirrors the design tokens as hex — keep them in step with `src/styles/global.css`.
+
 ## Known limitations (starter-grade, upgrade when needed)
 
-- Single `PAYMENTS_CURRENCY` for both gateways. Real multi-region needs per-plan currency.
-- Razorpay subscriptions use a fixed `total_count: 120`. Tune per plan interval.
-- `subscription` table stores the latest status per checkout; no full billing-event history.
+- No proration or mid-cycle plan changes beyond what the Stripe portal gives free.
+- Razorpay one-time orders can't be cancelled or refunded from the app.
+- `billing_event` stores no line items or tax breakdown — enough for an audit
+  trail, not enough to render an invoice.
+- The public pricing page can't mount checkout: marketing routes sit outside
+  `ClerkProvider`/`clerkMiddleware`, so auth state is unknowable there. Its CTA
+  routes to sign-up, and `/dashboard/billing` is the purchase surface.

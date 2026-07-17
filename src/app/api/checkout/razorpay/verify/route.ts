@@ -49,9 +49,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_signature' }, { status: 400 });
   }
 
+  // Fulfil only — the audit trail is written from the webhook, which carries the
+  // gateway's real event id. Recording here would log the same payment twice
+  // under an id Razorpay never issued.
   await fulfill({
     provider: 'razorpay',
     externalId: entityId,
+    eventId: `verify:${b.razorpay_payment_id}`,
+    type: 'checkout.verified',
     orgId: b.orgId,
     planId: b.planId,
     mode: b.mode,

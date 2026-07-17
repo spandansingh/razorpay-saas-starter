@@ -42,7 +42,7 @@ export const razorpayProvider: PaymentProvider = {
       }
       const sub = await client().subscriptions.create({
         plan_id: ref.razorpayPlanId,
-        total_count: 120, // ponytail: fixed 120 cycles (~10yr monthly); tune per plan interval
+        total_count: ref.totalCount, // per-plan; see DEFAULT_TOTAL_COUNT in planRefs
         customer_notify: 1,
         notes,
       });
@@ -86,6 +86,15 @@ export const razorpayProvider: PaymentProvider = {
     }
 
     const event = JSON.parse(rawBody);
+    const payment = event.payload.payment?.entity;
+
+    // Razorpay identifies each delivery with this header. Falling back to the
+    // payment id keeps the billing_event log idempotent if it is ever absent —
+    // it must stay unique per charge, so subscription.charged (which repeats for
+    // one subscription id) cannot collapse into a single row.
+    const eventId = headers.get('x-razorpay-event-id')
+      ?? `${event.event}:${payment?.id ?? event.payload.subscription?.entity?.id}`;
+
     switch (event.event) {
       case 'subscription.activated':
       case 'subscription.charged': {
@@ -93,13 +102,17 @@ export const razorpayProvider: PaymentProvider = {
         return {
           provider: 'razorpay',
           externalId: sub.id,
+          eventId,
+          type: event.event,
           orgId: sub.notes?.orgId,
           planId: sub.notes?.planId,
           mode: 'subscription',
           status: 'active',
+          amount: payment?.amount,
+          currency: payment?.currency,
           // The subscription entity itself has no email; pull it from the
           // payment entity when this event includes one (e.g. subscription.charged).
-          customerEmail: event.payload.payment?.entity?.email,
+          customerEmail: payment?.email,
           customerId: sub.customer_id,
         };
       }
@@ -108,6 +121,8 @@ export const razorpayProvider: PaymentProvider = {
         return {
           provider: 'razorpay',
           externalId: sub.id,
+          eventId,
+          type: event.event,
           orgId: sub.notes?.orgId,
           planId: sub.notes?.planId,
           mode: 'subscription',
@@ -121,10 +136,14 @@ export const razorpayProvider: PaymentProvider = {
         return {
           provider: 'razorpay',
           externalId: pay.order_id ?? pay.id,
+          eventId,
+          type: event.event,
           orgId: pay.notes?.orgId,
           planId: pay.notes?.planId,
           mode: 'payment',
           status: 'paid',
+          amount: pay.amount,
+          currency: pay.currency,
           customerEmail: pay.email,
           customerId: pay.customer_id,
         };

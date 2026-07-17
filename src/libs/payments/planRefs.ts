@@ -8,11 +8,30 @@ export type PlanRef = {
   planId: string;
   amount: number; // major units, from PricingPlans price
   currency: string;
+  totalCount: number;
   stripePriceId?: string;
   razorpayPlanId?: string;
 };
 
-const REFS: Record<string, { stripePriceId?: string; razorpayPlanId?: string }> = {
+type PlanConfig = {
+  stripePriceId?: string;
+  razorpayPlanId?: string;
+  /** This plan's own currency. Unset → PAYMENTS_CURRENCY. */
+  currency?: string;
+  /** How many billing cycles a Razorpay subscription runs for. Unset → DEFAULT_TOTAL_COUNT. */
+  totalCount?: number;
+};
+
+// Razorpay requires a finite cycle count up front; it has no "until cancelled".
+// 120 monthly cycles is ten years — effectively open-ended, and the customer can
+// cancel at any point. A plan billed yearly wants ~10 here, not 120, so set
+// totalCount per plan whenever the interval isn't monthly.
+const DEFAULT_TOTAL_COUNT = 120;
+
+// Per-plan currency: a plan priced for another region declares its own, and
+// Stripe price ids already encode currency themselves. Setups that never set one
+// keep the single PAYMENTS_CURRENCY behaviour with no config change.
+const REFS: Record<string, PlanConfig> = {
   premium: {
     stripePriceId: Env.STRIPE_PRICE_PREMIUM,
     razorpayPlanId: Env.RAZORPAY_PLAN_PREMIUM,
@@ -28,11 +47,18 @@ export function getPlanRef(planId: string): PlanRef | null {
   if (!plan || plan.price === 0) {
     return null; // unknown or free plan — nothing to charge
   }
+
+  const config = REFS[planId];
+
   return {
     planId,
     amount: plan.price,
-    currency: Env.PAYMENTS_CURRENCY,
-    ...REFS[planId],
+    // Explicit rather than spread: a config key present but undefined would
+    // otherwise overwrite the fallback with undefined.
+    currency: config?.currency ?? Env.PAYMENTS_CURRENCY,
+    totalCount: config?.totalCount ?? DEFAULT_TOTAL_COUNT,
+    stripePriceId: config?.stripePriceId,
+    razorpayPlanId: config?.razorpayPlanId,
   };
 }
 

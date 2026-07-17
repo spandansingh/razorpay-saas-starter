@@ -62,10 +62,14 @@ export const stripeProvider: PaymentProvider = {
         return {
           provider: 'stripe',
           externalId: (s.subscription as string | null) ?? s.id,
+          eventId: event.id,
+          type: event.type,
           orgId: s.metadata?.orgId,
           planId: s.metadata?.planId,
           mode: s.mode === 'subscription' ? 'subscription' : 'payment',
           status: s.mode === 'subscription' ? 'active' : 'paid',
+          amount: s.amount_total ?? undefined,
+          currency: s.currency?.toUpperCase(),
           customerEmail: s.customer_email ?? s.customer_details?.email ?? undefined,
           customerId: customerId(s.customer),
         };
@@ -75,6 +79,8 @@ export const stripeProvider: PaymentProvider = {
         return {
           provider: 'stripe',
           externalId: s.id,
+          eventId: event.id,
+          type: event.type,
           orgId: s.metadata?.orgId,
           planId: s.metadata?.planId,
           mode: 'subscription',

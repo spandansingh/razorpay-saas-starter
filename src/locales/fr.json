@@ -150,7 +150,11 @@
     "one_time_note": "Il s’agissait d’un paiement unique, il n’y a donc rien à annuler.",
     "no_plan_title": "Aucun forfait actif",
     "no_plan_description": "Choisissez un forfait pour commencer.",
-    "plan_price": "{price} $ / mois"
+    "plan_price": "{price} $ / mois",
+    "history_title": "Historique de facturation",
+    "history_date": "Date",
+    "history_type": "Événement",
+    "history_amount": "Montant"
   },
   "Todos": {
     "add": "Ajouter une tâche",

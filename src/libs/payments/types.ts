@@ -33,10 +33,20 @@ export type CheckoutResult
 export type NormalizedEvent = {
   provider: ProviderName;
   externalId: string;
+  // The gateway's id for the delivery itself, distinct from externalId (the
+  // subscription/order). Unique per event, so it is what makes the billing_event
+  // log idempotent across redeliveries.
+  eventId: string;
+  // The gateway's own event name, kept verbatim for the audit trail.
+  type: string;
   planId?: string;
   orgId?: string;
   mode: PaymentMode;
   status: 'active' | 'paid' | 'cancelled' | 'failed';
+  // Charged amount in minor units (paise/cents) and its currency, when the
+  // payload carries them. Cancellations and activations do not.
+  amount?: number;
+  currency?: string;
   // Customer email from the gateway payload, when present. Optional because not
   // every event (cancellations, deletions) carries one. Used for receipts only.
   customerEmail?: string;

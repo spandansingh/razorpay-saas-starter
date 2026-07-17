@@ -56,6 +56,16 @@ export default antfu(
   },
   // --- Storybook Rules ---
   ...storybook.configs['flat/recommended'],
+  // --- Email Template Rules ---
+  {
+    files: ['src/emails/**/*.tsx'],
+    rules: {
+      // Email templates are rendered to a string on the server and never mount in
+      // a browser, so Fast Refresh does not apply. Colocating a template with its
+      // render function is the point: adding an email stays a single file.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
   // --- Custom Rule Overrides ---
   {
     rules: {

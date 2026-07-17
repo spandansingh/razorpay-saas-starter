@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
+import { renderWelcomeEmail } from '@/emails/WelcomeEmail';
 import { sendEmail } from '@/libs/email';
 import { logger } from '@/libs/Logger';
 
@@ -16,11 +17,7 @@ export async function POST(req: NextRequest) {
       const user = evt.data as { id?: string; email_addresses?: { email_address: string }[] };
       const email = user.email_addresses?.[0]?.email_address;
       if (email) {
-        const result = await sendEmail({
-          to: email,
-          subject: 'Welcome aboard! 👋',
-          text: 'Thanks for signing up — your workspace is ready. Get started in your dashboard.',
-        });
+        const result = await sendEmail({ to: email, ...(await renderWelcomeEmail()) });
         if (!result.skipped && result.error) {
           logger.error(`welcome email failed for user ${user.id ?? 'unknown'}: ${result.error}`);
         }

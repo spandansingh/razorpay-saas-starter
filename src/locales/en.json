@@ -150,7 +150,11 @@
     "one_time_note": "This was a one-time payment, so there is nothing to cancel.",
     "no_plan_title": "No active plan",
     "no_plan_description": "Choose a plan to get started.",
-    "plan_price": "${price} / month"
+    "plan_price": "${price} / month",
+    "history_title": "Billing history",
+    "history_date": "Date",
+    "history_type": "Event",
+    "history_amount": "Amount"
   },
   "Todos": {
     "add": "Add todo",

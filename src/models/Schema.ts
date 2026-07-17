@@ -1,5 +1,5 @@
 import type { NormalizedEvent, PaymentMode, ProviderName } from '@/libs/payments/types';
-import { index, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, serial, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
 
@@ -54,3 +54,28 @@ export const subscriptionSchema = pgTable('subscription', {
     .notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
+
+// Append-only audit trail: one row per processed webhook, where `subscription`
+// keeps only the latest status. Never updated, only inserted.
+//
+// Deliberately stores no raw payload and no signature — only these flat,
+// non-sensitive columns. The raw body is what carries PII and the signed
+// material, and persisting it is exactly what the AGENTS.md rule forbids.
+export const billingEventSchema = pgTable('billing_event', {
+  id: serial('id').primaryKey(),
+  provider: text('provider').$type<ProviderName>().notNull(),
+  // The gateway's id for the delivery. Unique per provider so a redelivered
+  // webhook conflicts instead of appending a duplicate row.
+  eventId: text('event_id').notNull(),
+  type: text('type').notNull(), // the gateway's own event name
+  // Nullable: an event we cannot attribute to an org is still worth logging.
+  orgId: text('org_id'),
+  planId: text('plan_id'),
+  amount: integer('amount'), // minor units (paise/cents); absent on cancellations
+  currency: text('currency'),
+  status: text('status').$type<NormalizedEvent['status']>().notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+}, table => [
+  unique('billing_event_provider_event_id_key').on(table.provider, table.eventId),
+  index('billing_event_org_id_idx').on(table.orgId),
+]);

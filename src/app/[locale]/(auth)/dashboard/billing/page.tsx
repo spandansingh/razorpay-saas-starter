@@ -1,10 +1,12 @@
 import { auth } from '@clerk/nextjs/server';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { BillingHistory } from '@/features/billing/BillingHistory';
 import { CurrentPlanCard } from '@/features/billing/CurrentPlanCard';
 import { PlanCheckout } from '@/features/billing/PlanCheckout';
 import { NotAuthorized } from '@/features/dashboard/NotAuthorized';
 import { TitleBar } from '@/features/dashboard/TitleBar';
 import { isOrgAdmin } from '@/libs/authz';
+import { getBillingEvents } from '@/libs/payments/events';
 import { getActiveSubscription } from '@/libs/payments/queries';
 import { AllPlans } from '@/utils/PricingPlans';
 
@@ -21,7 +23,9 @@ export default async function BillingPage(props: {
   }
 
   const { orgId } = await auth();
-  const subscription = orgId ? await getActiveSubscription(orgId) : null;
+  const [subscription, events] = orgId
+    ? await Promise.all([getActiveSubscription(orgId), getBillingEvents(orgId)])
+    : [null, []];
   const paidPlans = AllPlans.filter(plan => plan.price > 0);
 
   return (
@@ -57,6 +61,8 @@ export default async function BillingPage(props: {
               </div>
             </div>
           )}
+
+      <BillingHistory events={events} />
     </>
   );
 }
