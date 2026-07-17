@@ -28,6 +28,13 @@ export const AppConfig = {
   email: {
     support: 'contact@nextjs-boilerplate.com',
   },
+  analytics: {
+    // PostHog's default ingestion host, used by both the browser provider and
+    // the server client. It lives here rather than in libs/analytics.ts because
+    // that module imports posthog-node: a client component importing it would
+    // drag node:fs into the browser bundle and fail the build.
+    defaultPostHogHost: 'https://us.i.posthog.com',
+  },
 } as const;
 
 const supportedLocales: Record<string, LocalizationResource> = {

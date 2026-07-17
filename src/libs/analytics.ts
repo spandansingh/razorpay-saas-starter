@@ -1,8 +1,10 @@
 import { PostHog } from 'posthog-node';
 import { Env } from '@/libs/Env';
 import { logger } from '@/libs/Logger';
+import { AppConfig } from '@/utils/AppConfig';
 
-export const DEFAULT_POSTHOG_HOST = 'https://us.i.posthog.com';
+// Server-only: posthog-node pulls in node:fs. Never import this from a client
+// component — put anything the browser also needs in AppConfig instead.
 
 export type CaptureInput = {
   event: string;
@@ -19,7 +21,7 @@ function getClient(): PostHog | null {
   }
   if (!client) {
     client = new PostHog(Env.NEXT_PUBLIC_POSTHOG_KEY, {
-      host: Env.NEXT_PUBLIC_POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
+      host: Env.NEXT_PUBLIC_POSTHOG_HOST || AppConfig.analytics.defaultPostHogHost,
     });
   }
   return client;
